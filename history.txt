@@ -1,0 +1,21 @@
+ cool
+ cool
+nano &
+jobs
+[A[A[Avi &
+jobs
+fg 16128
+fg 1
+fg 1
+jobs
+fg 1
+vi &
+jobs
+ls
+cd
+cd ..
+vi &
+jobs
+vi &
+vi &
+jobs
