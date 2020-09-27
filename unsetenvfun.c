@@ -1,7 +1,7 @@
 #include "headers.h"
 #include "macros.h"
 
-void unsetenvfun(int argc, char argv[][SIZE]) {
+void unsetenvfun(int argc, char** argv) {
 	if (argc != 2) {
 		printf("unsetenv: invalid count of arguments\n");
 		return;

@@ -4,6 +4,7 @@
 #include "process_args.h"
 #include "signal.h"
 #include "old.h"
+#include "ex.h"
 
 extern bool bg;
 pid_t bg_pids[50];
@@ -23,13 +24,17 @@ void get_begin(char *begin) {
 int main() {
 	char begin[500], str[100];
 	get_begin(begin);
-	
 	while (1) {
+		// for (int i = 0; i < total; ++i)
+		// 	fprintf(stderr, "%s/", process_name[i]);
+		
 		prompt(begin);
+		// perror("main");
 		if (fgets(str, SIZE, stdin) == NULL)
 			exit(0);
 		save(str);
 		split_commands(str, begin);
+
 	}
 	// printf("out of loop\n");
 	// if (waitpid(parent, &wstatus, WNOHANG) == -1) 

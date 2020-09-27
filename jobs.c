@@ -1,43 +1,37 @@
 #include "headers.h"
-#include "jobs.h"
+#include "pinfo.h"
 
-extern char process_name[50][SIZE];
-extern pid_t bg_pids[50];
+
 extern int total;
+extern char process_name[50][25];
+extern pid_t bg_pids[50];
 
-
-void get_state(char *path, char *State) {
-	FILE *file = fopen(path, "r");
-	if (errno) {
-      perror("jobs fopen");
-      return;
-    }
-    char line[SIZE];
-    while (fgets(line, 128, file) != NULL) {
-    	if (strncmp(line, "State", 5) == 0) {
-    		*State = line[7];
-    		break;
-    	}
-    }
-}
-
-
-void jobs(int argc, char argv[][SIZE]) {
-	char path[100]; 
+void jobs(int argc, char argv[][500]) {
+	int VmSize;
 	char State = '\0';
 	for (int i = 0; i < total; ++i) {
+		char path[100] = "/proc/";
 		char id[12];
-		strcpy(path, "/proc/");
+		char action[25];
 		sprintf(id, "%d", bg_pids[i]);
 		strcat(path, id);
 		strcat(path, "/status");
-		get_state(path, &State);
-		printf("[%d]", i+1);
+		get_vmsize_state(path, &VmSize, &State);
+		// printf("%s\n", );
+		switch (State) {
+			case 'R':
+			case 'S':
+				strcpy(action, " running");
+				break;
+			case 'T':
+				strcpy(action, " stopped");
+				break;
 
-		if (State == 'R')
-			printf(" running");
-		else
-			printf(" stopped");
-		printf(" %s [%d]\n", process_name[i], bg_pids[i]);
+			default:
+				strcpy(action, "stopped");
+		}
+		printf("[%d] %s %s [%d]\n", i+1, action, process_name[i], bg_pids[i]);
 	}
+	// for (int i = 0; i < total; ++i)
+	// 	fprintf(stderr, "%s/", process_name[i]);
 }

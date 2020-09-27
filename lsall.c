@@ -487,7 +487,7 @@ void __init__(int argc, char* argv[]) {
     //     argv[index++] = NULL; 
 }
 
-void ls(int argc, char argv[][SIZE]) {
+void ls(int argc, char** argv) {
 	global_dir = ".";
 	optind = 1;
     char* first = ".";
@@ -495,9 +495,13 @@ void ls(int argc, char argv[][SIZE]) {
     // argv[2] = "-a";
     // argv[2] = "willtryagain/consistent";
     // argc = 3;
-    strcpy(argv[0], "./a.out");
+    char str[SIZE];
+    getcwd(str, SIZE);
+    // strcpy(argv[0], "./a.out");
+    argv[0] = "./a.out";
     for (int i = 0; i < argc; ++i)
        edit[i] = argv[i];
-    scan_dirs(argc, edit, get_opts(argc, edit));
+    scan_dirs(argc, argv, get_opts(argc, argv));
     // printf("%s\n", global_dir);
+    chdir(str);
 }

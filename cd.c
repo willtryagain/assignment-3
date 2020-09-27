@@ -2,7 +2,7 @@
 #include "macros.h"
 
 
-void cd(int argc, char *begin, char argv[][SIZE]) {
+void cd(int argc, char *begin, char **argv) {
 	char cwd[SIZE];
 	// for (int i = 0; i < argc; ++i)
  //        printf("%s/", argv[i]);
@@ -13,7 +13,7 @@ void cd(int argc, char *begin, char argv[][SIZE]) {
 		printf("cd: too many arguments\n");
 		return;
 	} else {
-		if (argc == 1 || strcmp(argv[1], "~") == 0)
+		if (argc == 1 || !strcmp(argv[1], "~"))
 			chdir(begin);
 		else{
 			chdir(argv[1]);

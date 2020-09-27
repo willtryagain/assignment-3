@@ -27,5 +27,5 @@ struct Choices {
 // void display_dir(char *dir, struct Choices choices);
 // void scan_dirs(int count, char args[][SIZE], struct Choices choices);
 // void ls(int argc, char const argv[][SIZE]);
-void ls(int argc, char argv[][SIZE]);
+void ls(int argc, char** argv);
 #endif

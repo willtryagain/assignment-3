@@ -14,6 +14,7 @@
 #include "kjob.h"
 #include "fg.h"
 #include "pipefun.h"
+#include "echo.h"
 
 extern char process_name[50][25];
 extern pid_t bg_pids[50];
@@ -28,132 +29,167 @@ void format(char *word) {
 
 void zhandler() {
 	bg = true;
+	if (kill(getpid(), 17) < 0)
+		perror("ctrl");
 	printf("now bg\n");
 }
 
-int ex(int argc, char* begin, char argv[][SIZE]) {
-	//why not make sure only parent reaches here ?
-	// if (pid) {
-		// printf("one %s\n", getenv(argv[0]));
+
+
+char **set_argv() {
+	char **argv = malloc(80 * sizeof(char *));
+	for (int i = 0; i < 80; ++i)
+		argv[i] = NULL;
+	return argv; 
+}
+
+
+
+void ex(int argc, char* begin, char args[][SIZE]) {
+	char **argv = set_argv();
+	int filedes[2] = {0, 1};
+	int redirect[2] = {0, 1};
+	int cnt = 0;
+	char *str;
+	bg = false;
+	// fprintf(stderr, "c%d\n", getpid());
+	if ((filedes[0] = dup(0)) < 0) 
+		perror("dup 1");
+	if ((filedes[1] = dup(1)) < 0)
+		perror("dup ii");
+	
+	if (argc == 0)
+		return;
+
+	if (has_arrows(argc, args)) {
+		arrows(redirect, argc, args);
+		// printf("%d %d\n", redirect[0], redirect[1]);
+		if (dup2(redirect[0], 0) < 0) {
+			perror("dup2 i");
+			exit(1);
+		}
+		if (dup2(redirect[1], 1) < 0) {
+			perror("dup2 ii");
+			exit(1);
+		}
+		// printf("%d %d\n", redirect[0], redirect[1]);
+	}
+	// fprintf(stderr, "> %d %d\n", filedes[0], filedes[1]);
+	for (int i = 0; i < argc; ++i) {
+		if (strcmp(args[i],"")) {
+			if (!strcmp(args[i], "~"))
+				strcpy(args[i], begin);
+			argv[cnt++] = strndup(args[i], SIZE);
+		}
+	}
+	argc =  cnt;
+	argv[argc] = NULL;
+
+	//command block
+	//argv[0] = NULL || 
+	if (!strcmp(argv[0], "quit"))
+		exit(0);
+	
+	// else if (has_pipe(argc, argv))
+		// pipefun(argc, argv);
+	else if (argc == 1 && argv[0][0] == '$') {
+		char *str =getenv(argv[0]+1);
+		if (str != NULL)
+			printf("%s\n", str);
+	}
+	else if (!strcmp(argv[0], "cd"))
+		cd(argc, begin, argv);
+	else if (!strcmp(argv[0], "ls"))
+		ls(argc, argv);
+	else if (!strcmp(argv[0], "pwd")) 
+		pwd(argc, argv); 
+	else if (!strcmp(argv[0], "pinfo"))
+		pinfo(argc, argv);
+	else if (!strcmp(argv[0], "echo")) 
+		echo(argc, argv);
+	else if (!strcmp(argv[0], "history")) 
+		history(argc, argv);	
+	else if  (!strcmp(argv[0], "setenv"))
+		setenvfun(argc, argv); 
+	else if (!strcmp(argv[0], "unsetenv"))
+		unsetenvfun(argc, argv);
+	else if (!strcmp(argv[0], "jobs"))
+		jobs(argc, argv);
+	else if (!strcmp(argv[0], "overkill"))
+		overkill();
+	else if (!strcmp(argv[0], "kjob"))
+		kjob(argc, argv);
+	else if (!strcmp(argv[0], "fg"))
+		fg(argc, argv);
+
+	//fork block
+	else { 
 		int pid;
-		for (int i = 0; i < argc; ++i) {
-			// printf("%s\n", begin);
-			if (strcmp(argv[i], "~") == 0)
-				strcpy(argv[i], begin);
-		}
-		if (argc == 0)
-			return false;
-		else if (!strcmp(argv[0], "quit"))
-			exit(0);
-		else if (has_arrows(argc, argv))
-			arrows(argc, argv);
-		// else if (has_pipe(argc, argv))
-			// pipefun(argc, argv);
-		else if (argc == 1 && argv[0][0] == '$') {
-			char *str =getenv(argv[0]+1);
-			if (str != NULL)
-				printf("%s\n", str);
-		}
-		else if (strcmp(argv[0], "cd") == 0) {
-			cd(argc, begin, argv);
-			return true;
-		}
-		else if (strcmp(argv[0], "ls") == 0) {
-			char str[SIZE];
-			getcwd(str, SIZE);
-			ls(argc, argv);
-			chdir(str);
-			return true;
-		}
-		else if (strcmp(argv[0], "pwd") == 0) {
-			pwd(argc, argv);
-			return true;
+		bool flag = 0;
+		
+		// signal(SIGCHLD, handler);
+		// signal(SIGTSTP, zhandler);
+		if (!strcmp(argv[argc-1], "&")) {
+			bg = true;
+			argv[argc-1] = NULL;
 		} 
-		else if (strcmp(argv[0], "pinfo") == 0) {
-			pinfo(argc, argv);
-			return true;
-		} else if (strcmp(argv[0], "echo") == 0) {
-			for (int i = 1; i < argc; ++i)
-				printf("%s ", argv[i]);
-			printf("\n");
-			return true;
-		} else if (strcmp(argv[0], "history") == 0) 
-			history(argc, argv);	
-		else if  (strcmp(argv[0], "setenv") == 0)
-			setenvfun(argc, argv); 
-		else if (strcmp(argv[0], "unsetenv") == 0)
-			unsetenvfun(argc, argv);
-		else if (strcmp(argv[0], "jobs") == 0)
-			jobs(argc, argv);
-		else if (!strcmp(argv[0], "overkill"))
-			overkill();
-		else if (!strcmp(argv[0], "kjob"))
-			kjob(argc, argv);
-		else if (!strcmp(argv[0], "fg"))
-			fg(argc, argv);
-		else { 
-			char* edit[argc+1];
-			bool flag = 0;
-			edit[argc] = NULL;
-			for (int i = 0; i < argc; ++i)
-				edit[i] = argv[i];
-			signal(SIGCHLD, handler);
-			signal(SIGTSTP, zhandler);
-			if (strcmp(argv[argc-1], "&") == 0) {
-				bg = true;
-				edit[argc-1] = NULL;
-			} else
-				bg = false;
-			// printf("system call %s\n", argv[0]);
-			pid = fork();
-			if (!pid) {
-				// printf("ex child %d\n", getpid());
-				// printf("child one %d\n", getpid());
-				char **args;
-				args = malloc(80 * sizeof(char *));
-				args[0] = "cat";
-				args[1] = "/proc/self/status";
-				// execvp(args[0], args); 
-				kill(getpid(), SIGCONT);
-				if (bg)
-					setpgid(0, 0);
+		signal(SIGTTOU, SIG_IGN);
 
-				execvp(edit[0], edit);
-				// execvp(args[0], args); 
+		signal(SIGCHLD, handler);
 
-				// signal(SIGTSTP, SIG_DFL);
+		if ((pid = fork()) < 0) {
+			perror("could not fork!\n");
+			exit(1);
+		}
 
-				if (errno) {
-					// printf("I am here\n");
-					perror("ex execvp");
-					kill(getpid(), SIGKILL);
-				} 
-
-			} else {
-				// printf("ex parent %d\n", getpid());
-				// printf("two %d\n", getpid());
-				
-				if (!bg) {
-					int status;
-					printf("I am waiting\n");
-					
-					pid = wait(&status);
-					printf("stopped wait\n");
-					if (WIFEXITED(status)) {
-						//normal
-						// printf("normal\n");
-					} else {
-						//abnormal
-						// printf("abnormal\n");
-					}
-				}
-				else {
-					strcpy(process_name[total], edit[0]);
-					bg_pids[total] = pid;
-					total++;
+		if (!pid) {
+			// fprintf(stderr, "child 1 %d\n", getpid());
+			// kill(getpid(), SIGCONT);
+			if (bg) {
+				if (setpgid(0, 0) < 0) {
+					perror("setpgid");
+					exit(1);
 				}
 			}
-		// }
+			// char **argv2 = malloc(80 * sizeof(char *));
+			// for (int i = 0; i < 80; ++i)
+			// 	argv2[i] = NULL;
+			// argv2[0] = "pinfo";
+			// argv2[1] = itoa(getpid(), str, 10);
+			// pinfo(2, argv2);
+			if (execvp(argv[0], argv) < 0) {
+				perror("ex execvp");
+				kill(getpid(), SIGKILL);
+			}
+			if (bg)
+				pause();
+			// pinfo(2, argv2);
+		} 
+		else {
+			if (!bg)
+				wait(NULL);
+			else {
+				setpgid(pid, pid);
+			}
+			// free(argv);
+		}
+
+		if (bg) {
+			strcpy(process_name[total], argv[0]);
+			// fprintf(stderr, "name %s\n", process_name[total]);
+			bg_pids[total++] = pid;
+		}
+	}
+	// for (int i = 0; i < total; ++i)
+	// 	fprintf(stderr, "%s/", process_name[i]);
+	// fprintf(stderr, "exit %d\n", bg);
+	if (dup2(filedes[0], 0) < 0) {
+		perror("dup2 i");
+		exit(1);
+	}
+	if (dup2(filedes[1], 1) < 0) {
+		perror("dup2 ii");
+		exit(1);
 	}
 	
 }

@@ -1,21 +1,21 @@
- cool
- cool
-nano &
 jobs
-[A[A[Avi &
-jobs
-fg 16128
-fg 1
-fg 1
-jobs
+fg 4
+clear
+gedit &
 fg 1
 vi &
+fg 1
+ls &
+c
+pwd &
 jobs
-ls
-cd
-cd ..
-vi &
+vi
+gedit &
 jobs
+fg 1
 vi &
+fg 2
 vi &
-jobs
+fg 1
+vi &
+fg 1

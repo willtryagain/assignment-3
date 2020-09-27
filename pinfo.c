@@ -3,7 +3,6 @@
 #include "macros.h"
 
 
-
 int parse_line(char *line) {
 	//for kb
 	int n = strlen(line);
@@ -15,12 +14,14 @@ int parse_line(char *line) {
 }
 
 void get_vmsize_state(char *path, int *VmSize, char *State) {
-	FILE *file = fopen(path, "r");
-	if (errno) {
-      perror("pinfo fopen");
+	FILE *file = NULL;
+	char line[200]; 
+
+	if ((file = fopen(path, "r")) == NULL) {
+      // perror("pinfo fopen");
       return;
     }
-    char line[SIZE];
+    
     while (fgets(line, 128, file) != NULL) {
     	if (strncmp(line, "VmSize", 6) == 0) 
     		*VmSize = parse_line(line);
@@ -35,16 +36,23 @@ void get_ex_path(char *path, char *ex_path) {
       perror("executable path");
 }
 
-void pinfo(int argc, char const *argv[]) {
+void pinfo(int argc, char** argv) {
+	// for (int i = 0; i < argc; ++i)
+	// 	printf("%s/", argv[i]);
 	int VmSize = -1;
-	char path_v[SIZE];
-	char path_e[SIZE];
+	char path_v[100] = "/proc/";
+	char path_e[SIZE] = "/proc/";
 	char State = '\0';
 	char ex_path[SIZE] = "NULL";
-	strcpy(ex_path, "NULL");
-	strcpy(path_v, "/proc/");
-	strcpy(path_e, "/proc/");
+
+	// for (int i = 0; i < argc; ++i) {
+	// 	if (argv[i] == NULL) {
+	// 		printf("%d/", i);
+	// 	} else
+	// 	printf("%s/", argv[i]);
+	// }
 	if (argc == 2) {
+		// printf("%s\n", argv[1]);
 		strcat(path_v, argv[1]);
 		strcat(path_e, argv[1]);
 	} else if (argc == 1) {

@@ -1,7 +1,7 @@
 #include "headers.h"
 #include "macros.h"
 
-void setenvfun(int argc, char argv[][SIZE]) {
+void setenvfun(int argc, char** argv) {
 	if (argc == 1 || argc > 3) {
 		printf("setenv: invalid count of arguments\n");
 		return;

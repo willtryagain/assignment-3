@@ -67,7 +67,7 @@ void save(char *str) {
 		perror("printf");
 }
 
-void history(int argc, char argv[][SIZE]) {
+void history(int argc, char ** argv) {
 	int line = 0;
 	size_t len = 0;
 	char strings[100][SIZE];

@@ -2,6 +2,6 @@
 #define __OLD_H
 
 void save(char *str);
-void history(int argc, char argv[][SIZE]);
+void history(int argc, char** argv);
 
 #endif
