@@ -9,13 +9,21 @@
 
 static int cnt = 0;
 int pd[2] = {0, 1};
-void run(int argc, char argv[][SIZE]) {
-	int pid=-1;
-	
-	char **args = malloc(80 * sizeof(char *));
-    for (int i = 0; i < argc; ++i)
-        args[i] = strndup(argv[i], 100);
-    args[argc] = NULL;
+void run(int n, int index, int argc, char argv[][SIZE]) {
+	pid_t pid;
+	if ((pid = fork()) < 0) {
+		perror("fork");
+		exit(1);
+	}
+	if (pid == 0) {
+		if (index == 0)
+			close(pd[0]);
+		else {
+			dup2(pd[0], 0);
+			close(pd[])
+		}
+
+	}
 	if ((pid = fork()) == 0) {
 		dup2(pd[1], 1);
 		// execvp(args[0], args);
