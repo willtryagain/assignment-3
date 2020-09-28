@@ -8,10 +8,10 @@
 // extern bool bg;
 
 static int cnt = 0;
-int pd[2];
+int pd[2] = {0, 1};
 void run(int argc, char argv[][SIZE]) {
 	int pid=-1;
-	pipe(pd);
+	
 	char **args = malloc(80 * sizeof(char *));
     for (int i = 0; i < argc; ++i)
         args[i] = strndup(argv[i], 100);
@@ -73,44 +73,37 @@ void split_commands(char *commands, char *begin) {
 			strcpy(args2[index2++], word);
 			word = strtok(NULL, "|");		
 		}
-
-		if ((filedes[0] = dup(0)) < 0)
-			perror("dup 1");
-		if ((filedes[1] = dup(1)) < 0)
-			perror("dup ii");
-
+		pipe(pd);
 		for (int j = 0; j < index2; ++j) {
-			index3 = 0;
 			char *word = strtok(args2[j], " ");
-			
+			index3 = 0;
 			while (word != NULL) {
 				strcpy(args3[index3++], word);
 				word = strtok(NULL, " ");		
 			}
-			// char **args = malloc(80 * sizeof(char *));
-			strcpy(temp[0], "ls");
-			// cnt++;
-			// if (cnt == 1)
-			// 	run(1, temp);
-
-			if (j != index2-1)
-				run(index3, args3);		
-			else
-				ex(index3, args3[0], args3);
-			printf("\n");
+			run(index2, j, index3, args3);		
+			else {
+				int pid;
+				if ((pid = fork()) < 0) {
+					perror("could not fork!\n");
+					exit(1);
+				} 
+				if (!pid) {
+					// pipe(pd);
+					dup2(pd[1], 0);
+					ex(index3, args3[0], args3);
+					// execvp(args[0], args);
+				} 
+				wait(NULL);
+	
+				// kill(getpid(), SIGKILL);
+			}
+			// printf("\n");
 		}
 		
 
 		// ex(1, temp[0], temp);
 		// ex(1, temp[0], temp);
-		if (dup2(filedes[0], 0) < 0) {
-			perror("dup2 i");
-			exit(1);
-		}
-		if (dup2(filedes[1], 1) < 0) {
-			perror("dup2 ii");
-			exit(1);
-		}
 	}
 	
 	
