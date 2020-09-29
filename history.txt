@@ -1,21 +1,21 @@
-jobs
-fg 4
-clear
-gedit &
-fg 1
-vi &
-fg 1
-ls &
-c
-pwd &
-jobs
-vi
-gedit &
-jobs
-fg 1
-vi &
-fg 2
-vi &
-fg 1
-vi &
-fg 1
+
+	
+
+[A
+gedit
+cd
+ls
+cd ..
+ls
+cd operating
+mkdir test_dir
+cd test_dir
+mkdir a/b
+mkdir -r a/b
+mkdir a
+mkdir a/b
+cd a
+ls | wc
+
+
+ls

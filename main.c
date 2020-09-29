@@ -33,6 +33,9 @@ int main() {
 		if (fgets(str, SIZE, stdin) == NULL)
 			exit(0);
 		save(str);
+		signal(SIGINT, SIG_IGN);
+		signal(SIGTSTP, SIG_IGN);
+		
 		split_commands(str, begin);
 
 	}

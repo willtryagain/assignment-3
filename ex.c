@@ -16,23 +16,41 @@
 #include "pipefun.h"
 #include "echo.h"
 
+bool bg;
+
 extern char process_name[50][25];
 extern pid_t bg_pids[50];
 extern int total;
 
-bool bg;
 void format(char *word) {
 	int n = strlen(word);
 	if (word[n-1] == '\n')
 		word[n-1] = 0;
 }
 
-void zhandler() {
-	bg = true;
-	if (kill(getpid(), 17) < 0)
-		perror("ctrl");
-	printf("now bg\n");
+void zhandler(int child_id) {
+	int pid;
+	if ((pid = fork()) < 0) {
+		perror("could not fork!\n");
+		exit(1);
+	} 
+	if (pid) 
+		kill(child_id, SIGSTOP);
+	strcpy(process_name[total], "name");
+	bg_pids[total++] = pid;
+
+	
 }
+
+
+void handlerz() {
+	printf("i am parent\n");
+}
+void chandler() {
+	printf("int\n");
+	if (kill(getpid(), SIGINT) < 0)
+		perror("ctrlc");
+} 
 
 
 
@@ -50,6 +68,7 @@ void ex(int argc, char* begin, char args[][SIZE]) {
 	int filedes[2] = {0, 1};
 	int redirect[2] = {0, 1};
 	int cnt = 0;
+	int pid;
 	char *str;
 	bg = false;
 	// fprintf(stderr, "c%d\n", getpid());
@@ -124,61 +143,53 @@ void ex(int argc, char* begin, char args[][SIZE]) {
 
 	//fork block
 	else { 
-		int pid;
 		bool flag = 0;
-		
-		// signal(SIGCHLD, handler);
-		// signal(SIGTSTP, zhandler);
 		if (!strcmp(argv[argc-1], "&")) {
 			bg = true;
 			argv[argc-1] = NULL;
+			signal(SIGCHLD, handler);
 		} 
-		signal(SIGTTOU, SIG_IGN);
-
-		signal(SIGCHLD, handler);
+		// signal(SIGTTOU, SIG_IGN);
+		
 
 		if ((pid = fork()) < 0) {
 			perror("could not fork!\n");
 			exit(1);
 		}
-
 		if (!pid) {
-			// fprintf(stderr, "child 1 %d\n", getpid());
-			// kill(getpid(), SIGCONT);
+			signal(SIGTSTP, zhandler);
+			signal(SIGINT, chandler);
+
 			if (bg) {
 				if (setpgid(0, 0) < 0) {
 					perror("setpgid");
 					exit(1);
 				}
 			}
-			// char **argv2 = malloc(80 * sizeof(char *));
-			// for (int i = 0; i < 80; ++i)
-			// 	argv2[i] = NULL;
-			// argv2[0] = "pinfo";
-			// argv2[1] = itoa(getpid(), str, 10);
-			// pinfo(2, argv2);
 			if (execvp(argv[0], argv) < 0) {
 				perror("ex execvp");
-				kill(getpid(), SIGKILL);
+				exit(1);
 			}
 			if (bg)
 				pause();
-			// pinfo(2, argv2);
 		} 
 		else {
-			if (!bg)
+			// signal(SIGTSTP, zhandler(pid));
+
+			if (!bg)  {
+				printf("waiting\n");
 				wait(NULL);
-			else {
-				setpgid(pid, pid);
+
 			}
-			// free(argv);
+
+			else {
+				// 	setpgid(pid, pid);
+				strcpy(process_name[total], argv[0]);
+				bg_pids[total++] = pid;
+			}
 		}
 
-		if (bg) {
-			strcpy(process_name[total], argv[0]);
-			// fprintf(stderr, "name %s\n", process_name[total]);
-			bg_pids[total++] = pid;
-		}
+		
 	}
 	// for (int i = 0; i < total; ++i)
 	// 	fprintf(stderr, "%s/", process_name[i]);
