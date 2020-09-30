@@ -39,15 +39,15 @@ void arrows(int redirect[], int argc, char argv[][SIZE]) {
 			i++;
 		}
 	}
-	for (int i = 0; i < argc; ++i)
-		printf("%s\n", argv[i]);
+	// for (int i = 0; i < argc; ++i)
+	// 	printf("%s\n", argv[i]);
 
 	if (strcmp(ifile, "")) {
 		getcwd(path, 99);
 		strcat(path, "/");
 		strcat(path, ifile);
-		printf("i\n");
-		printf("%s\n", path);
+		// printf("i\n");
+		// printf("%s\n", path);
 		if ((fd = open(path, O_RDONLY)) < 0) {
 			perror("open");
 			exit(1);
@@ -58,15 +58,15 @@ void arrows(int redirect[], int argc, char argv[][SIZE]) {
 		getcwd(path, 99);
 		strcat(path, "/");
 		strcat(path, ofile);
-		printf("o\n");
-		printf("%s\n", path);
+		// printf("o\n");
+		// printf("%s\n", path);
 
 		if (append) {
 			if ((fd = open(path, O_WRONLY | O_APPEND | O_CREAT, 0644)) < 0) {
 				perror("open a");
 				exit(1);
 			}
-			printf("append\n");
+			// printf("append\n");
 
 		} else {
 

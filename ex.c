@@ -13,10 +13,13 @@
 #include "overkill.h"
 #include "kjob.h"
 #include "fg.h"
+#include "bg.h"
 #include "pipefun.h"
 #include "echo.h"
 
-bool bg;
+int pid;
+bool is_bg;
+char name[50];
 
 extern char process_name[50][25];
 extern pid_t bg_pids[50];
@@ -28,26 +31,22 @@ void format(char *word) {
 		word[n-1] = 0;
 }
 
-void zhandler(int child_id) {
-	int pid;
-	if ((pid = fork()) < 0) {
+void zhandler() {
+	int child_id;
+	if ((child_id = fork()) < 0) {
 		perror("could not fork!\n");
 		exit(1);
 	} 
-	if (pid) 
-		kill(child_id, SIGSTOP);
-	strcpy(process_name[total], "name");
+	if (child_id) 
+		kill(pid, SIGSTOP);
+	strcpy(process_name[total], name);
 	bg_pids[total++] = pid;
 
 	
 }
 
-
-void handlerz() {
-	printf("i am parent\n");
-}
 void chandler() {
-	printf("int\n");
+	// printf("int\n");
 	if (kill(getpid(), SIGINT) < 0)
 		perror("ctrlc");
 } 
@@ -68,9 +67,9 @@ void ex(int argc, char* begin, char args[][SIZE]) {
 	int filedes[2] = {0, 1};
 	int redirect[2] = {0, 1};
 	int cnt = 0;
-	int pid;
+	// int pid;
 	char *str;
-	bg = false;
+	is_bg = false;
 	// fprintf(stderr, "c%d\n", getpid());
 	if ((filedes[0] = dup(0)) < 0) 
 		perror("dup 1");
@@ -140,12 +139,15 @@ void ex(int argc, char* begin, char args[][SIZE]) {
 		kjob(argc, argv);
 	else if (!strcmp(argv[0], "fg"))
 		fg(argc, argv);
+	else if (!strcmp(argv[0], "bg"))
+		bg(argc, argv);
 
 	//fork block
 	else { 
 		bool flag = 0;
+		strcpy(name, argv[0]);
 		if (!strcmp(argv[argc-1], "&")) {
-			bg = true;
+			is_bg = true;
 			argv[argc-1] = NULL;
 			signal(SIGCHLD, handler);
 		} 
@@ -160,7 +162,7 @@ void ex(int argc, char* begin, char args[][SIZE]) {
 			signal(SIGTSTP, zhandler);
 			signal(SIGINT, chandler);
 
-			if (bg) {
+			if (is_bg) {
 				if (setpgid(0, 0) < 0) {
 					perror("setpgid");
 					exit(1);
@@ -170,20 +172,20 @@ void ex(int argc, char* begin, char args[][SIZE]) {
 				perror("ex execvp");
 				exit(1);
 			}
-			if (bg)
+			if (is_bg)
 				pause();
 		} 
 		else {
-			// signal(SIGTSTP, zhandler(pid));
+			signal(SIGTSTP, zhandler);
 
-			if (!bg)  {
-				printf("waiting\n");
+			if (!is_bg)  {
+				// printf("waiting\n");
 				wait(NULL);
 
 			}
 
 			else {
-				// 	setpgid(pid, pid);
+				setpgid(pid, pid);
 				strcpy(process_name[total], argv[0]);
 				bg_pids[total++] = pid;
 			}
@@ -193,7 +195,7 @@ void ex(int argc, char* begin, char args[][SIZE]) {
 	}
 	// for (int i = 0; i < total; ++i)
 	// 	fprintf(stderr, "%s/", process_name[i]);
-	// fprintf(stderr, "exit %d\n", bg);
+	// fprintf(stderr, "exit %d\n", is_bg);
 	if (dup2(filedes[0], 0) < 0) {
 		perror("dup2 i");
 		exit(1);

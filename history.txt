@@ -1,21 +1,21 @@
-
-	
-
-[A
-gedit
 cd
+cd ..
+ls | wc
+     81      81     651
+ps | echo
+
+ps | cat
+  PID TTY          TIME CMD
+ 9562 pts/1    00:00:00 bash
+ 9858 pts/1    00:00:00 memcheck-amd64-
+ 9859 pts/1    00:00:00 ps
+ 9860 pts/1    00:00:00 cat
 ls
 cd ..
-ls
-cd operating
-mkdir test_dir
-cd test_dir
-mkdir a/b
-mkdir -r a/b
-mkdir a
-mkdir a/b
-cd a
 ls | wc
-
-
-ls
+     81      81     651
+ls | wc
+ls | wc | wc
+ls | wc | wc
+ls | cat
+ls | wc | wc

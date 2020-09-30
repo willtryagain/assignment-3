@@ -10,12 +10,14 @@ void fg(int argc, char** argv) {
 	}
 	int job_number = atoi(argv[1]);
 	// printf("%d %d\n", job_number, signal_number);
-	if (job_number > total) 
+	if (job_number > total || total == 0) {
 		fprintf(stderr, "fg: no job\n");
+		return;
+	}
 
-	else if (kill(bg_pids[job_number-1], SIGCONT) < 0)
+	// signal(SIGTTOU, SIG_IGN);
+	tcsetpgrp(STDIN_FILENO, getpid());
+	if (kill(bg_pids[job_number-1], SIGCONT) < 0)
 		perror("fg");
-	signal(SIGTTOU, SIG_IGN);
-	tcsetpgrp(STDIN_FILENO, bg_pids[job_number-1]);
 	sleep(2);
 }
