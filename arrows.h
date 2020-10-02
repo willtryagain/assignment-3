@@ -3,6 +3,6 @@
 #define __ARROWS_H
 
 bool has_arrows(int argc, char argv[][SIZE]);
-void arrows(int argc, char argv[][SIZE]);
+void arrows(int redirect[], int argc, char argv[][SIZE]);
 
 #endif

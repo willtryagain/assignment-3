@@ -10,81 +10,72 @@ bool has_arrows(int argc, char argv[][SIZE]) {
 	return false;
 }
 
-void arrows(int argc, char argv[][SIZE]) {
-	int pid;
-	char line[81];
-	char *token;
-	char *separator = " \t\n";
-	char **args;
-	char **args2;
-	char *cp;
-	char *ifile, *ofile;
-	int i, j;
-	int err;
+void arrows(int redirect[], int argc, char argv[][SIZE]) {
+	char ifile[50] = "", ofile[50] = "";
+	int fd;
 	bool append = false;
-	ifile = ofile = NULL;
-    args2 = malloc(80 * sizeof(char *));
+	char path[100];
+	char **args = malloc(80 * sizeof(char *));
 
-
+	redirect[0] = 0;
+	redirect[1] = 1;
+	// printf("1\n");
 	for (int i = 0; i < argc; ++i) {
 		if (!strcmp(argv[i],">>")) {
 			append = true;
-			ofile = argv[i+1];
+			strcpy(ofile, argv[i+1]);
+			strcpy(argv[i], "");
+			strcpy(argv[i+1], "");
 			i++;
 		} else if (!strcmp(argv[i], ">")) {
-			ofile = argv[i+1];
+			strcpy(ofile, argv[i+1]);
+			strcpy(argv[i], "");
+			strcpy(argv[i+1], "");
 			i++;
 		} else if (!strcmp(argv[i], "<")) {
-			ifile = argv[i+1];
+			strcpy(ifile, argv[i+1]);
+			strcpy(argv[i], "");
+			strcpy(argv[i+1], "");
 			i++;
 		}
 	}
+	// for (int i = 0; i < argc; ++i)
+	// 	printf("%s\n", argv[i]);
 
-	args2[0] = argv[0];
-	args2[1] =NULL;
-	switch (pid = fork()) {
-		case 0:
-			//open stdin
-			if (ifile != NULL) {
-				int fd = open(ifile, O_RDONLY);
-				printf("i - %s\n", ifile);
-				if (dup2(fd, STDIN_FILENO) < 0) {
-					fprintf(stderr, "dup2 i failed");
-					exit(1);
-				}
-				
-				close(fd);
-			}	
-			//open stdout {}
-			if (ofile != NULL) {
-				int fd2;
-				printf("o - %s\n", ofile);
-				if (append) {
-					if ((fd2 = open(ofile, O_APPEND | O_CREAT, 0644)) < 0) {
-						perror("couldn't open output file.");
-						exit(1);
-					}
-				} else {
-					if ((fd2 = open(ofile, O_WRONLY | O_CREAT, 0644)) < 0) {
-						perror("couldn't open output file.");
-						exit(1);
-					}
-				} 
-
-				if (dup2(fd2, STDOUT_FILENO) < 0) 
-					fprintf(stderr, "dup2 o failed");
-				close(fd2);
-			}
-			// execvp(args2[0], args2);
-			signal(SIGINT, SIG_DFL);
-			// fprintf(stderr, "ERROR no such program\n");
-			// exit(1);
-			break;
-		case -1:
-			fprintf(stderr, "ERROR can't create child process!\n");
-            break;
-
-        default:
-           wait(NULL);
+	if (strcmp(ifile, "")) {
+		getcwd(path, 99);
+		strcat(path, "/");
+		strcat(path, ifile);
+		// printf("i\n");
+		// printf("%s\n", path);
+		if ((fd = open(path, O_RDONLY)) < 0) {
+			perror("open");
+			exit(1);
+		}
+		redirect[0] = fd;
 	}
+	if (strcmp(ofile, "")) {
+		getcwd(path, 99);
+		strcat(path, "/");
+		strcat(path, ofile);
+		// printf("o\n");
+		// printf("%s\n", path);
+
+		if (append) {
+			if ((fd = open(path, O_WRONLY | O_APPEND | O_CREAT, 0644)) < 0) {
+				perror("open a");
+				exit(1);
+			}
+			// printf("append\n");
+
+		} else {
+
+			if ((fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0644)) < 0) {
+				perror("open o");
+				exit(1);
+			}
+		}
+		redirect[1] = fd;
+	} 
+	// printf("3\n");
 }

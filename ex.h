@@ -1,3 +1,5 @@
+#include "macros.h"
+
 #ifndef __EX_H
 #define __EX_H
 
