@@ -4,7 +4,7 @@
 #include "lsall.h"
 #include "pinfo.h"
 #include "pwd.h"
-#include "old.h"
+// #include "old.h"
 #include "signal.h"
 #include "setenvfun.h"
 #include "unsetenvfun.h"
@@ -16,6 +16,7 @@
 #include "bg.h"
 #include "pipefun.h"
 #include "echo.h"
+#include "restore_fd.h"
 
 int pid;
 bool is_bg;
@@ -37,17 +38,20 @@ void zhandler() {
 		perror("could not fork!\n");
 		exit(1);
 	} 
-	if (child_id) 
-		kill(pid, SIGSTOP);
+	if (child_id)  {
+
+		kill(child_id, SIGSTOP);
+		kill(pid, SIGKILL);
+	}
 	strcpy(process_name[total], name);
-	bg_pids[total++] = pid;
+	bg_pids[total++] = child_id;
 
 	
 }
 
 void chandler() {
 	// printf("int\n");
-	if (kill(getpid(), SIGINT) < 0)
+	if (kill(pid, SIGINT) < 0)
 		perror("ctrlc");
 } 
 
@@ -64,33 +68,16 @@ char **set_argv() {
 
 void ex(int argc, char* begin, char args[][SIZE]) {
 	char **argv = set_argv();
-	int filedes[2] = {0, 1};
-	int redirect[2] = {0, 1};
+	int redirect[2];
 	int cnt = 0;
-	// int pid;
 	char *str;
 	is_bg = false;
-	// fprintf(stderr, "c%d\n", getpid());
-	if ((filedes[0] = dup(0)) < 0) 
-		perror("dup 1");
-	if ((filedes[1] = dup(1)) < 0)
-		perror("dup ii");
-	
 	if (argc == 0)
 		return;
 
 	if (has_arrows(argc, args)) {
 		arrows(redirect, argc, args);
-		// printf("%d %d\n", redirect[0], redirect[1]);
-		if (dup2(redirect[0], 0) < 0) {
-			perror("dup2 i");
-			exit(1);
-		}
-		if (dup2(redirect[1], 1) < 0) {
-			perror("dup2 ii");
-			exit(1);
-		}
-		// printf("%d %d\n", redirect[0], redirect[1]);
+		restore(redirect);
 	}
 	// fprintf(stderr, "> %d %d\n", filedes[0], filedes[1]);
 	for (int i = 0; i < argc; ++i) {
@@ -125,8 +112,8 @@ void ex(int argc, char* begin, char args[][SIZE]) {
 		pinfo(argc, argv);
 	else if (!strcmp(argv[0], "echo")) 
 		echo(argc, argv);
-	else if (!strcmp(argv[0], "history")) 
-		history(argc, argv);	
+	// else if (!strcmp(argv[0], "history")) 
+	// 	history(argc, argv);	
 	else if  (!strcmp(argv[0], "setenv"))
 		setenvfun(argc, argv); 
 	else if (!strcmp(argv[0], "unsetenv"))
@@ -137,8 +124,10 @@ void ex(int argc, char* begin, char args[][SIZE]) {
 		overkill();
 	else if (!strcmp(argv[0], "kjob"))
 		kjob(argc, argv);
-	else if (!strcmp(argv[0], "fg"))
+	else if (!strcmp(argv[0], "fg")) {
 		fg(argc, argv);
+		// printf("right\n");
+	}
 	else if (!strcmp(argv[0], "bg"))
 		bg(argc, argv);
 
@@ -146,6 +135,8 @@ void ex(int argc, char* begin, char args[][SIZE]) {
 	else { 
 		bool flag = 0;
 		strcpy(name, argv[0]);
+		signal(SIGTSTP, zhandler);
+
 		if (!strcmp(argv[argc-1], "&")) {
 			is_bg = true;
 			argv[argc-1] = NULL;
@@ -159,9 +150,9 @@ void ex(int argc, char* begin, char args[][SIZE]) {
 			exit(1);
 		}
 		if (!pid) {
-			signal(SIGTSTP, zhandler);
 			signal(SIGINT, chandler);
-
+			signal(SIGTSTP, zhandler);
+			
 			if (is_bg) {
 				if (setpgid(0, 0) < 0) {
 					perror("setpgid");
@@ -176,7 +167,6 @@ void ex(int argc, char* begin, char args[][SIZE]) {
 				pause();
 		} 
 		else {
-			signal(SIGTSTP, zhandler);
 
 			if (!is_bg)  {
 				// printf("waiting\n");
@@ -193,16 +183,7 @@ void ex(int argc, char* begin, char args[][SIZE]) {
 
 		
 	}
-	// for (int i = 0; i < total; ++i)
-	// 	fprintf(stderr, "%s/", process_name[i]);
-	// fprintf(stderr, "exit %d\n", is_bg);
-	if (dup2(filedes[0], 0) < 0) {
-		perror("dup2 i");
-		exit(1);
-	}
-	if (dup2(filedes[1], 1) < 0) {
-		perror("dup2 ii");
-		exit(1);
-	}
+	// close(redirect[0]);
+	// close(redirect[1]);
 	
 }

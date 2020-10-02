@@ -2,9 +2,12 @@
 #include "macros.h"
 #include "modify_path.h"
 
-char prev[2][50] = {".", "."};
+char prev[2][50];
 void cd(int argc, char *begin, char **argv) {
 	char cwd[50];
+	strcpy(prev[0], begin);
+	strcpy(prev[1], begin);
+
 	// for (int i = 0; i < argc; ++i)
  //        printf("%s/", argv[i]);
 	if (errno)
