@@ -2,16 +2,15 @@
 #include "macros.h"
 #include "modify_path.h"
 
-char prev[2][50];
+char prev[2][50] = {"~", "~"};
 void cd(int argc, char *begin, char **argv) {
 	char cwd[50];
-	strcpy(prev[0], begin);
-	strcpy(prev[1], begin);
-
-	// for (int i = 0; i < argc; ++i)
- //        printf("%s/", argv[i]);
-	if (errno)
-		perror("getpwd in cd");
+	if (!strcmp(prev[0], "~"))
+		strcpy(prev[0], begin);
+	if (!strcmp(prev[1], "~"))
+		strcpy(prev[1], begin);
+	strcpy(prev[0], prev[1]);
+	getcwd(prev[1], 50);
 	if (argc > 2) {
 		printf("cd: too many arguments\n");
 		return;
@@ -22,16 +21,13 @@ void cd(int argc, char *begin, char **argv) {
 			chdir(prev[0]);
 			strcpy(cwd, prev[0]);
 			modify_path(begin, cwd);
-			printf("%s\n", cwd);
+			fprintf(stderr, "%s\n", cwd);
 		}
-		else
-			chdir(argv[1]);
+		else {
+			if (chdir(argv[1]) < 0)
+				perror("chd");
+		}
 		
-		if (errno)
-			perror("chdir");
-		getcwd(cwd, SIZE);
-		strcpy(prev[0], prev[1]);
-		strcpy(prev[1], cwd);
 	}
 }
 
