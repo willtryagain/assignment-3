@@ -10,11 +10,14 @@ void prompt(char *begin) {
 	char str[100];
 	char cwd[100];
 
+	struct passwd *pass; pass = getpwuid(getuid());
 	// printf("%d %s\n", getlogin_r(username, 99), username);
-	if (getlogin_r(username, 99) != 0) {
-		perror("username");
-		return;
-	}
+	char* name = pass->pw_name;
+	// printf("%s", name);
+	// if (getlogin_r(username, 99) != 0) {
+	// 	// perror("username");
+	// 	return;
+	// }
 	if (gethostname(hostname, 99) != 0) {
 		perror("hostname");
 		return;
@@ -25,7 +28,7 @@ void prompt(char *begin) {
 	}
 
 	strcpy(str, "<");
-	strcat(str, username);
+	strcat(str, name);
 	strcat(str, "@");
 	strcat(str,hostname);
 	strcat(str, ":");
