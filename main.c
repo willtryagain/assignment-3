@@ -3,13 +3,17 @@
 #include "prompt.h"
 #include "process_args.h"
 #include "signal.h"
-#include "old.h"
+// #include "old.h"
 #include "ex.h"
+#include "restore_fd.h"
+
 
 extern bool bg;
 pid_t bg_pids[50];
 int total = 0;
 char process_name[50][25];
+int counter_ = 0;
+struct stat st;
 
 void get_begin(char *begin) {
 	char cwd[100];
@@ -23,21 +27,23 @@ void get_begin(char *begin) {
 
 int main() {
 	char begin[500], str[100];
+	int fds[2] = {0, 1};
+	signal(SIGINT, SIG_IGN);
+	signal(SIGTSTP, SIG_IGN);
 	get_begin(begin);
+	save(fds);
 	while (1) {
 		// for (int i = 0; i < total; ++i)
 		// 	fprintf(stderr, "%s/", process_name[i]);
-		
+		fstat(0, &st);
 		prompt(begin);
-		// perror("main");
+		// printf("%d %d %d\n", getpid(), counter_++, st.st_ino);
 		if (fgets(str, SIZE, stdin) == NULL)
 			exit(0);
-		// save(str);
-		signal(SIGINT, SIG_IGN);
-		signal(SIGTSTP, SIG_IGN);
 		
-		split_commands(str, begin);
 
+		split_commands(str, begin);
+		restore(fds);
 	}
 	// printf("out of loop\n");
 	// if (waitpid(parent, &wstatus, WNOHANG) == -1) 
