@@ -5,25 +5,29 @@
 
 
 void prompt(char *begin) {
-	char username[SIZE];
-	char hostname[SIZE];
-	char str[SIZE];
-	char cwd[SIZE];
-	getlogin_r(username, SIZE);
-	if (errno) {
+	char username[100];
+	char hostname[100];
+	char str[100];
+	char cwd[100];
+	
+	
+	struct passwd *pws;
+	pws = getpwuid(getuid());
+	strcpy(username, pws->pw_name);
+	/*printf("%d %s\n", getlogin_r(username, 99), username);
+	if (getlogin_r(username, 99) != 0) {
 		perror("username");
 		return;
-	}
-	gethostname(hostname, SIZE);
-	if (errno) {
+	}*/
+	if (gethostname(hostname, 99) != 0) {
 		perror("hostname");
 		return;
 	}
-	getcwd(cwd, SIZE);
-	if (errno) {
+	if (getcwd(cwd, SIZE) == NULL) {
 		perror("working directory");
 		return;
 	}
+
 	strcpy(str, "<");
 	strcat(str, username);
 	strcat(str, "@");
@@ -34,9 +38,3 @@ void prompt(char *begin) {
 	strcat(str, ">");
 	printf("%s", str);
 }
-
-// int main(int argc, char const *argv[]) {
-// 	prompt("/home/name/Documents/operating");
-// 	// printf("%d", SIZE);
-// 	return 0;
-// }
